@@ -6,7 +6,15 @@ defmodule RCEWeb.UserControllerTest do
   alias RCE.Users
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    {:ok, user_manager} = Users.Manager.start_link(name: nil)
+    Process.put(Users.Manager, user_manager)
+
+    Ecto.Adapters.SQL.Sandbox.allow(RCE.Repo, self(), user_manager)
+
+    %{
+      conn: put_req_header(conn, "accept", "application/json"),
+      user_manager: user_manager
+    }
   end
 
   describe "index" do

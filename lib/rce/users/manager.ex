@@ -6,12 +6,26 @@ defmodule RCE.Users.Manager do
   @update_interval 60_1000
 
   def start_link(opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
-    GenServer.start_link(__MODULE__, [], name: name)
+    options =
+      case Keyword.fetch(opts, :name) do
+        {:ok, nil} -> []
+        {:ok, name} -> [name: name]
+        :error -> [name: __MODULE__]
+      end
+
+    GenServer.start_link(__MODULE__, [], options)
   end
 
-  def list_users(server \\ __MODULE__) do
+  def list_users(server \\ default_server()) do
     GenServer.call(server, :list_users)
+  end
+
+  if Mix.env() == :test do
+    def default_server do
+      Process.get(__MODULE__) || __MODULE__
+    end
+  else
+    def default_server, do: __MODULE__
   end
 
   ###
