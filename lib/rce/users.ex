@@ -22,6 +22,28 @@ defmodule RCE.Users do
   end
 
   @doc """
+  Returns the list of users matching the specified criteria.
+
+  ## Examples
+
+      iex> list_users(points: {:gt, 10})
+      [%User{}, ...]  # a list of all users that have more than 10 points
+
+      Iex> list_users(limit: 10)
+      [%User{}, ...]  # a list of ten users fetched from the DB,
+                      # in no particular order
+  """
+  def list_users(filters) do
+    query =
+      Enum.reduce(filters, User, fn
+        {:points, {:gt, value}}, query -> where(query, [user], user.points > ^value)
+        {:limit, limit}, query -> limit(query, [user], ^limit)
+      end)
+
+    Repo.all(query)
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples

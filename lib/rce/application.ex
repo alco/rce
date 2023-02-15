@@ -15,9 +15,9 @@ defmodule RCE.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: RCE.PubSub},
       # Start the Endpoint (http/https)
-      RCEWeb.Endpoint
-      # Start a worker by calling: RCE.Worker.start_link(arg)
-      # {RCE.Worker, arg}
+      RCEWeb.Endpoint,
+      # Start a worker process that manages user points.
+      RCE.Users.Manager
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
