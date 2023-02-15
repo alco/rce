@@ -3,17 +3,10 @@ defmodule RCEWeb.UserControllerTest do
 
   import RCE.UsersFixtures
 
-  alias RCE.Users
-
   setup %{conn: conn} do
-    {:ok, user_manager} = Users.Manager.start_link(name: nil)
-    Process.put(Users.Manager, user_manager)
-
-    Ecto.Adapters.SQL.Sandbox.allow(RCE.Repo, self(), user_manager)
-
     %{
       conn: put_req_header(conn, "accept", "application/json"),
-      user_manager: user_manager
+      user_manager: RCE.TestHelpers.start_user_manager!()
     }
   end
 

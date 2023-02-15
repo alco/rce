@@ -3,7 +3,9 @@ defmodule RCE.Users.Manager do
 
   alias RCE.Users
 
-  @update_interval 60_1000
+  require Logger
+
+  @default_update_interval 60_1000
 
   def start_link(opts) do
     options =
@@ -13,7 +15,8 @@ defmodule RCE.Users.Manager do
         :error -> [name: __MODULE__]
       end
 
-    GenServer.start_link(__MODULE__, [], options)
+    init_args = Keyword.drop(opts, [:name])
+    GenServer.start_link(__MODULE__, init_args, options)
   end
 
   def list_users(server \\ default_server()) do
@@ -33,9 +36,19 @@ defmodule RCE.Users.Manager do
   ###
 
   @impl true
-  def init([]) do
-    schedule_tick()
-    {:ok, %{min_number: random_integer(), timestamp: nil}}
+  def init(opts) do
+    update_interval = Keyword.get(opts, :update_interval, @default_update_interval)
+    schedule_user_update(update_interval)
+
+    debug_pid = Keyword.get(opts, :debug_pid)
+
+    {:ok,
+     %{
+       min_number: random_integer(),
+       timestamp: nil,
+       update_interval: update_interval,
+       debug_pid: debug_pid
+     }}
   end
 
   @impl true
@@ -45,9 +58,17 @@ defmodule RCE.Users.Manager do
   end
 
   @impl true
-  def handle_info(:tick, state) do
-    schedule_tick()
-    Users.refresh_user_points()
+  def handle_info(:update_users, state) do
+    schedule_user_update(state.update_interval)
+
+    case Users.refresh_user_points() do
+      {:ok, _} ->
+        if state.debug_pid, do: send(state.debug_pid, {:updated_users, self()})
+
+      other ->
+        Logger.error("Failed to update users", %{reason: inspect(other)})
+    end
+
     {:noreply, %{state | min_number: random_integer()}}
   end
 
@@ -58,5 +79,5 @@ defmodule RCE.Users.Manager do
   # Generate a new random integer in the range [0, 100]
   defp random_integer, do: :rand.uniform(101) - 1
 
-  defp schedule_tick, do: Process.send_after(self(), :tick, @update_interval)
+  defp schedule_user_update(timeout), do: Process.send_after(self(), :update_users, timeout)
 end
