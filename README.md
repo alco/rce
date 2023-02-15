@@ -1,18 +1,31 @@
 # RCE
 
-To start your Phoenix server:
+A coding exercise.
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+_#Elixir_ _#Phoenix_ _#JSON API_
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+## Setup
 
-## Learn more
+Run `mix setup` once to fetch mix dependencies and populate the DB with seed data.
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+```
+$ mix setup
+```
+
+
+## Running the server
+
+Start the Phoenix server.
+
+```
+$ mix phx.server
+```
+
+Then navigate to http://localhost:4000 to fetch the JSON containing zero, one,
+or two users and the timestamp of the previous fetch (not necessarily performed
+by the same client).
+
+Every time you hit the endpoint, a different set of users may be returned.
+
+Once a minute all users' points are updated with random values.
