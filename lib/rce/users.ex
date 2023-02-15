@@ -43,6 +43,10 @@ defmodule RCE.Users do
     Repo.all(query)
   end
 
+  def refresh_user_points do
+    Repo.query("UPDATE users SET points = floor(random() * 101)")
+  end
+
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
