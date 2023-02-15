@@ -20,6 +20,13 @@ if System.get_env("PHX_SERVER") do
   config :rce, RCEWeb.Endpoint, server: true
 end
 
+# Ensure that all timestamp columns created in Ecto migrations get the default
+# value of "now()".
+config :rce, RCE.Repo,
+  migration_timestamps: [
+    default: Ecto.Migration.fragment("now()")
+  ]
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
