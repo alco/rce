@@ -5,7 +5,9 @@ defmodule RCEWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/api", RCEWeb do
+  scope "/", RCEWeb do
     pipe_through :api
+
+    get "/", UserController, :index
   end
 end
