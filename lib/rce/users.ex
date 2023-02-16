@@ -17,6 +17,7 @@ defmodule RCE.Users do
       [%User{}, ...]
 
   """
+  @spec list_all_users :: [%User{}]
   def list_all_users do
     Repo.all(User)
   end
@@ -33,6 +34,7 @@ defmodule RCE.Users do
       [%User{}, ...]  # a list of ten users fetched from the DB,
                       # in no particular order
   """
+  @spec list_users(points: {:gt, integer}, limit: pos_integer) :: [%User{}]
   def list_users(filters) do
     query =
       Enum.reduce(filters, User, fn
@@ -43,8 +45,14 @@ defmodule RCE.Users do
     Repo.all(query)
   end
 
+  @doc """
+  Assign new random values to all users' points.
+  """
+  @spec refresh_user_points :: :ok | {:error, Exception.t()}
   def refresh_user_points do
-    Repo.query("UPDATE users SET points = floor(random() * 101)")
+    with {:ok, _} <- Repo.query("UPDATE users SET points = floor(random() * 101)") do
+      :ok
+    end
   end
 
   @doc """
@@ -56,6 +64,7 @@ defmodule RCE.Users do
       %Ecto.Changeset{data: %User{}}
 
   """
+  @spec change_user(%User{}, map) :: Ecto.Changeset.t()
   def change_user(%User{} = user, attrs \\ %{}) do
     User.changeset(user, attrs)
   end

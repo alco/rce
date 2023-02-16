@@ -67,11 +67,11 @@ defmodule RCE.Users.Manager do
     schedule_user_update(state.update_interval)
 
     case Users.refresh_user_points() do
-      {:ok, _} ->
+      :ok ->
         if state.debug_pid, do: send(state.debug_pid, {:updated_users, self()})
 
-      other ->
-        Logger.error("Failed to update users", %{reason: inspect(other)})
+      {:error, reason} ->
+        Logger.error("Failed to update users", %{reason: inspect(reason)})
     end
 
     {:noreply, %{state | min_number: random_integer()}}
