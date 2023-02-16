@@ -10,4 +10,6 @@ defmodule RCE.TestHelpers do
 
     user_manager
   end
+
+  def user_points_map(users), do: Map.new(users, fn user -> {user.id, user.points} end)
 end

@@ -4,6 +4,7 @@ defmodule RCE.Users.ManagerTest do
   alias RCE.Users
 
   import RCE.UsersFixtures
+  import RCE.TestHelpers
 
   setup do
     %{users: Enum.map(1..10, fn _ -> user_fixture() end)}
@@ -14,7 +15,7 @@ defmodule RCE.Users.ManagerTest do
   # ...
 
   test "list_users() returns at most two users and ever increasing timestamps" do
-    manager = RCE.TestHelpers.start_user_manager!(update_interval: 1)
+    manager = start_user_manager!(update_interval: 1)
 
     timestamps =
       Enum.map(1..10, fn _ ->
@@ -48,12 +49,10 @@ defmodule RCE.Users.ManagerTest do
     # before starting the manager process.
     assert users == Users.list_all_users()
 
-    manager = RCE.TestHelpers.start_user_manager!(update_interval: 1)
+    manager = start_user_manager!(update_interval: 1)
 
     assert_receive {:updated_users, ^manager}
     updated_users = Users.list_all_users()
     refute user_points_map(users) == user_points_map(updated_users)
   end
-
-  defp user_points_map(users), do: Map.new(users, fn user -> {user.id, user.points} end)
 end
