@@ -10,10 +10,6 @@ defmodule RCE.Users.ManagerTest do
     %{users: Enum.map(1..10, fn _ -> user_fixture() end)}
   end
 
-  # NOTE: In general, it's best to only test externally visible behaviour of a
-  # gen server process, i.e. its public interface.
-  # ...
-
   test "list_users() returns at most two users and ever increasing timestamps" do
     manager = start_user_manager!(update_interval: 1)
 
@@ -43,6 +39,15 @@ defmodule RCE.Users.ManagerTest do
       timestamp
     end)
   end
+
+  # NOTE: In general, it's best to only test externally visible behaviour of a
+  # gen server process, i.e. its public interface. However, in the case of this
+  # coding exercise, the periodic updates that are happening inside
+  # Users.Manager are a key part of its functionality. Even in a real codebase
+  # where the gen server's implementation could span thousands of lines, it could
+  # also be beneficial to test the periodic update mechanism because there it
+  # would be not as easy to tell whether it is correctly implemented by looking
+  # at the implementation alone.
 
   test "updates users at regular intervals", %{users: users} do
     # Verify that `users` represents the current state of users in the database
