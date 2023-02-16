@@ -25,9 +25,16 @@ defmodule RCE.Users.Manager do
     GenServer.call(server, :list_users)
   end
 
+  # These conditional definitions are needed so that we could start a manager
+  # process inside a unit test and have it used by default elsewhere, e.g. in
+  # some controller action that's being exercised in the test.
   if Mix.env() == :test do
     def default_server do
       Process.get(__MODULE__) || __MODULE__
+    end
+
+    def put_default_server(pid) do
+      Process.put(__MODULE__, pid)
     end
   else
     def default_server, do: __MODULE__
