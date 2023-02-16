@@ -1,10 +1,30 @@
 defmodule RCE.Users.Manager do
+  @moduledoc """
+  A gen server that periodically updates user points and supports querying of
+  user records in a special way.
+  """
+
   use GenServer
 
   alias RCE.Users
 
   require Logger
 
+  @doc """
+  Start the gen server process.
+
+  ## Options
+
+    - `name: <atom>` - which local name to register the process under. Pass
+      `nil` to forego the registration entirely. Default: #{__MODULE__}.
+
+    - `update_interval: <integer>` (required) - how often user points should be
+      updated, in milliseconds.
+
+    - `debug_pid: <pid>` - optional PID to send debug messages to. Should not be
+      used in production.
+  """
+  @spec start_link(Keyword.t()) :: {:ok, pid} | {:error, term}
   def start_link(opts) do
     options =
       case Keyword.fetch(opts, :name) do
@@ -21,6 +41,13 @@ defmodule RCE.Users.Manager do
     GenServer.start_link(__MODULE__, init_opts, options)
   end
 
+  @doc """
+  Retrieve at most two users with point values greater than some threshold
+  internal to the gen server.
+
+  Don't ask me, it wasn't me who came up with this idea.
+  """
+  @spec list_users(pid | atom) :: {[%RCE.Users.User{}], DateTime.t() | nil}
   def list_users(server \\ default_server()) do
     GenServer.call(server, :list_users)
   end
@@ -47,9 +74,9 @@ defmodule RCE.Users.Manager do
   @impl true
   def init(opts) do
     update_interval = Keyword.fetch!(opts, :update_interval)
-    schedule_user_update(update_interval)
-
     debug_pid = Keyword.get(opts, :debug_pid)
+
+    schedule_user_update(update_interval)
 
     {:ok,
      %{
