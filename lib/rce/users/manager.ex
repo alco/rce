@@ -5,8 +5,6 @@ defmodule RCE.Users.Manager do
 
   require Logger
 
-  @default_update_interval 60_1000
-
   def start_link(opts) do
     options =
       case Keyword.fetch(opts, :name) do
@@ -15,8 +13,12 @@ defmodule RCE.Users.Manager do
         :error -> [name: __MODULE__]
       end
 
-    init_args = Keyword.drop(opts, [:name])
-    GenServer.start_link(__MODULE__, init_args, options)
+    init_opts = Keyword.drop(opts, [:name])
+
+    # Fail early if the required update_interval option is missing
+    _ = Keyword.fetch!(init_opts, :update_interval)
+
+    GenServer.start_link(__MODULE__, init_opts, options)
   end
 
   def list_users(server \\ default_server()) do
@@ -37,7 +39,7 @@ defmodule RCE.Users.Manager do
 
   @impl true
   def init(opts) do
-    update_interval = Keyword.get(opts, :update_interval, @default_update_interval)
+    update_interval = Keyword.fetch!(opts, :update_interval)
     schedule_user_update(update_interval)
 
     debug_pid = Keyword.get(opts, :debug_pid)

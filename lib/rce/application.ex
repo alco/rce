@@ -15,7 +15,7 @@ defmodule RCE.Application do
       # Start the Endpoint (http/https)
       RCEWeb.Endpoint,
       # Start a worker process that manages user points.
-      RCE.Users.Manager
+      {RCE.Users.Manager, update_interval: 60_000}
     ]
 
     opts = [strategy: :one_for_one, name: RCE.Supervisor]
