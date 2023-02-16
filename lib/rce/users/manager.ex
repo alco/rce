@@ -83,7 +83,8 @@ defmodule RCE.Users.Manager do
        min_number: random_integer(),
        timestamp: nil,
        update_interval: update_interval,
-       debug_pid: debug_pid
+       debug_pid: debug_pid,
+       async_update_task: nil
      }}
   end
 
@@ -97,10 +98,32 @@ defmodule RCE.Users.Manager do
   end
 
   @impl true
-  def handle_info(:update_users, state) do
+  def handle_info(:update_users, %{async_update_task: nil} = state) do
     schedule_user_update(state.update_interval)
 
-    case Users.refresh_user_points() do
+    # Local testing has shown that refreshing points for one million users takes
+    # about 5 seconds. This can easily block concurrent callers of this gen
+    # server and even cause some of them to abandon waiting on the
+    # GenServer.call() and crash with a timeout error (GenServer has the default
+    # timeout of 5s for calls).
+    #
+    # That's why we're firing off a task to refresh user points outside of the
+    # gen server process.
+    t = Task.async(fn -> Users.refresh_user_points() end)
+
+    {:noreply, %{state | min_number: random_integer(), async_update_task: t}}
+  end
+
+  # This clause matches when there's already an async update task running. Do
+  # not run another update until that one has completed, simply reschedule.
+  def handle_info(:update_users, state) do
+    schedule_user_update(state.update_interval)
+    {:noreply, state}
+  end
+
+  # Process the result of the user refresh task spawned earlier.
+  def handle_info({ref, result}, %{async_update_task: %{ref: ref}} = state) do
+    case result do
       :ok ->
         if state.debug_pid, do: send(state.debug_pid, {:updated_users, self()})
 
@@ -108,7 +131,15 @@ defmodule RCE.Users.Manager do
         Logger.error("Failed to update users", %{reason: inspect(reason)})
     end
 
-    {:noreply, %{state | min_number: random_integer()}}
+    {:noreply, state}
+  end
+
+  # The task process has terminated, so it's a good time to remove it from the state.
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _exit_reason},
+        %{async_update_task: %{ref: ref}} = state
+      ) do
+    {:noreply, %{state | async_update_task: nil}}
   end
 
   ###
