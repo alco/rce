@@ -54,6 +54,9 @@ defmodule RCE.Users.Manager do
   @impl true
   def handle_call(:list_users, _from, state) do
     users = Users.list_users(points: {:gt, state.min_number}, limit: 2)
+    # NOTE: the specification for the coding exercise does not specify which time zone
+    # to use for timestamps. I'm defaulting to UTC as the more robust, less
+    # error-prone choice than using local time.
     {:reply, {users, state.timestamp}, %{state | timestamp: DateTime.utc_now()}}
   end
 
